@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+
+def add_gi_path():
+    libdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    sys.path.insert(0, os.path.join(libdir))
+
+
+if __name__ == "__main__":
+    # Here we do some magic to run the tool from repo without installation
+    add_gi_path()
+    from gi.gi_app import gi
+    gi(sys.argv)
