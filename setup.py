@@ -1,7 +1,7 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(name='gi',
-      version='0.0.1',
+      version='0.0.2',
       description='Git wrapper to perform Mercurial-like short unique abbreviation searching for commands',
       maintainer='Kirill Gagarski',
       maintainer_email='kirill.gagarski [at] gmail.com',

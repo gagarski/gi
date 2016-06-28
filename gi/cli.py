@@ -8,32 +8,17 @@ class GiCli:
     """
 
     # gi CLI options
-    PRINT_ME = "--gi-print-me"
+    BASH_COMPLETION_HELPER = "--gi-bash-completion-helper-with-comp-cword"
     DO_NOT_PROCESS_DASHES = "--gi-do-not-process-dashes"
+    DUMMY_OPTION = "--gi-dummy-option"
+    DUMMY_KWARG = "--gi-dummy-kwarg"
 
     # Saving gi options to remove them while generating git command ine options
-    KNOWN_ARGS = (PRINT_ME, DO_NOT_PROCESS_DASHES)
-
+    KNOWN_OPTS = (DO_NOT_PROCESS_DASHES, DUMMY_OPTION)
+    KNOWN_KWARGS = (BASH_COMPLETION_HELPER, DUMMY_KWARG)
     # These options can be present before a command and their argument can resemble a command
     # E.g. in "gi -C stat pul" "pul" is a command, not "stat". "stat" is a directory.
     GIT_GLOBAL_OPTS_WITH_ARG = ("-C", "-c")
-
-    def __find_command(self):
-        """
-        Finds command abbreviation in gi command line arguments
-        :return tuple of the found abbreviation position and the abbreviation itself
-        """
-        skip_next = False
-
-        for i, arg in zip(count(1), self.__argv[1:]):
-            if not skip_next and not arg.startswith("-"):
-                return i, arg
-            elif arg in self.GIT_GLOBAL_OPTS_WITH_ARG:
-                skip_next = True
-            else:
-                skip_next = False
-
-        return None, None
 
     def __init__(self, argv):
         """
@@ -42,30 +27,62 @@ class GiCli:
         """
         if len(argv) < 1:
             raise ValueError("argv should contain at least an executable name")
+        self.__me = argv[0]
+        self.__command = None
+        self.__command_pos = None
+        self.__process_dashes = True
+        self.__bash_completion_helper = False
+        self.__bash_completion_cword = None
 
-        self.__argv = list(argv)
-        (self.__command_pos, self.__command) = self.__find_command()
+        skip_next = False
 
-    def is_print_me(self):
+        for i, arg in zip(count(1), argv[1:]):
+            if not skip_next and not arg.startswith("-") and self.__command is None:
+                self.__command_pos = i
+                self.__command = arg
+                skip_next = False
+            elif arg in self.GIT_GLOBAL_OPTS_WITH_ARG:
+                skip_next = True
+            elif arg == self.DO_NOT_PROCESS_DASHES:
+                self.__process_dashes = False
+                skip_next = False
+            elif len(arg.split("=")) == 2 and arg.split("=")[0] == self.BASH_COMPLETION_HELPER:
+                try:
+                    self.__bash_completion_helper = True
+                    self.__bash_completion_cword = int(arg.split("=")[1])
+                except ValueError:
+                    raise ValueError("Bad value for keyword arg {}".format(self.BASH_COMPLETION_HELPER))
+                skip_next = False
+            else:
+                skip_next = False
+
+    def is_bash_completion_helper(self):
         """
-        Should we pring git command line and exit?
+        Should we print data for bash completion and exit?
         :return:
         """
-        return self.PRINT_ME in self.__argv
+        return self.__bash_completion_helper
+
+    def get_bash_completion_cword(self):
+        """
+        Returns passed cword argument for bash completion
+        :return:
+        """
+        return self.__bash_completion_cword
 
     def is_process_dashes(self):
         """
         Should we perform special processing for dashes in command name?
         :return:
         """
-        return self.DO_NOT_PROCESS_DASHES not in self.__argv
+        return self.__process_dashes
 
     def get_me(self):
         """
         Returns executable name
         :return: executable name
         """
-        return self.__argv[0]
+        return self.__me
 
     def get_command(self):
         """
@@ -82,16 +99,111 @@ class GiCli:
         """
         return self.__command_pos
 
-    def make_git_cli(self, replacement=None, git="git"):
-        """
-        Generates GIT command line to execute or print
-        :param replacement: git command to replace found abbreviation
-        :param git: git executable name
-        :return: GIT command line to execute or print
-        """
-        new_argv = list(self.__argv)
-        new_argv[0] = git
-        if self.__command_pos is not None and replacement is not None:
-            new_argv[self.__command_pos] = replacement
-        return " ".join([shlex.quote(arg) for arg in (filter(lambda arg: arg not in self.KNOWN_ARGS, new_argv))])
 
+class CliCleaner:
+    """
+    Class that cleans up CLI to pass to git
+    """
+
+    def __init__(self, argv, git="git"):
+        """
+        Constructor
+        :param argv: command line
+        :param git: git executable name
+        """
+        if len(argv) < 1:
+            raise ValueError("argv should contain at least an executable name")
+
+        self.__cleaned_argv = [git]
+        self.__arg_removed = [False]
+        self.__new_arg_pos = [0]
+
+        current_offset = 0
+
+        for i, arg in zip(count(1), argv[1:]):
+            self.__new_arg_pos.append(i + current_offset)
+
+            if arg in GiCli.KNOWN_OPTS:
+                self.__arg_removed.append(True)
+                current_offset -= 1
+            elif len(arg.split("=")) == 2 and arg.split("=")[0] in GiCli.KNOWN_KWARGS:
+                self.__arg_removed.append(True)
+                current_offset -= 1
+            else:
+                self.__arg_removed.append(False)
+                self.__cleaned_argv.append(arg)
+
+    def is_arg_removed(self, i):
+        """
+        Was arg #i from the dirty command line removed during clean up?
+        :param i: argument index
+        :return: True if was, False otherwise
+        """
+        return self.__arg_removed[i]
+
+    def get_new_arg_pos(self, i):
+        """
+        Get position for arg #i from dirty the command line in the cleaned up command line
+        :param i: arg index
+        :return: new argument position
+        """
+        return self.__new_arg_pos[i]
+
+    def get_cleaned_up_args(self):
+        """
+        Returns cleaned up list of arguments. Eache argument is shell-escaped
+        :return: cleaned up list of arguments.
+        """
+        return [shlex.quote(arg) for arg in self.__cleaned_argv]
+
+
+def get_args_with_replaced_command(cli, cli_cleaner, command):
+    """
+    Returns args with command replaced by the 'command' argument
+    :param cli: GiCli object
+    :param cli_cleaner: CliCleaner object
+    :param command: new command
+    :return: args with command replaced by the 'command' argument
+    """
+
+    args = cli_cleaner.get_cleaned_up_args()
+    args[cli_cleaner.get_new_arg_pos(cli.get_command_pos())] = command
+    return args
+
+
+def print_bash_completion_output(cli, cli_cleaner, cword, new_command=None):
+    """
+    Prints output that bash completion script excepts to read.
+    If 'new_command' is not None, then command in argv replaced with new_command
+    :param cli: GiCli object
+    :param cli_cleaner: CliCleaner object
+    :param cword: COMP_CWORD bash variable value
+    :param new_command: found git command, None if none
+    :return:
+    """
+    print(cli_cleaner.is_arg_removed(cword))
+    print(cli_cleaner.get_new_arg_pos(cword))
+    if new_command is not None:
+        args = get_args_with_replaced_command(cli, cli_cleaner, new_command)
+    else:
+        args = cli_cleaner.get_cleaned_up_args()
+
+    for arg in args:
+        print(arg)
+
+
+def get_command_line(cli, cli_cleaner, new_command=None):
+    """
+    Returns GIT command line.
+    If 'new_command' is not None, then command in argv replaced with new_command
+    :param cli: GiCli object
+    :param cli_cleaner: CliCleaner object
+    :param new_command: found git command, None if none
+    :return: git command line
+    """
+    if new_command is not None:
+        args = get_args_with_replaced_command(cli, cli_cleaner, new_command)
+    else:
+        args = cli_cleaner.get_cleaned_up_args()
+
+    return " ".join(args)
