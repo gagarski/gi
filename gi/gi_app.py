@@ -18,14 +18,22 @@ def gi(argv):
     cli_cleaner = CliCleaner(argv)
 
     if cli.is_bash_completion_helper() and cli.get_command() is None:
-        print_bash_completion_output(cli, cli_cleaner, cli.get_bash_completion_cword())
+        print_bash_completion_output(cli,
+                                     cli_cleaner,
+                                     cli.get_bash_completion_cword(),
+                                     cli.is_bash_completion_cword_empty())
     elif cli.is_bash_completion_helper():
         possible_commands = trie.possible_commands(cli.get_command())
         if len(possible_commands) == 1:
             print_bash_completion_output(cli, cli_cleaner,
-                                         cli.get_bash_completion_cword(), possible_commands[0])
+                                         cli.get_bash_completion_cword(),
+                                         cli.is_bash_completion_cword_empty(),
+                                         possible_commands[0])
         else:
-            print_bash_completion_output(cli, cli_cleaner, cli.get_bash_completion_cword())
+            print_bash_completion_output(cli,
+                                         cli_cleaner,
+                                         cli.get_bash_completion_cword(),
+                                         cli.is_bash_completion_cword_empty())
     elif cli.get_command() is None:
         # Just git with arguments. No commands.
         # E.g. "git --version"
