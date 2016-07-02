@@ -2,9 +2,9 @@ import sys
 
 import os
 
-from gi.git import get_git_commands, get_git_aliases
-from gi.processing import CommandsFinder
-from gi.cli import GiCli, CliCleaner, print_bash_completion_output, get_command_line
+from gi4git.git import get_git_commands, get_git_aliases
+from gi4git.processing import CommandsFinder
+from gi4git.cli import GiCli, CliCleaner, print_bash_completion_output, get_command_line
 
 
 def gi(argv):

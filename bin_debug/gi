@@ -11,5 +11,5 @@ def add_gi_path():
 if __name__ == "__main__":
     # Here we do some magic to run the tool from repo without installation
     add_gi_path()
-    from gi.gi_app import gi
+    from gi4git.gi_app import gi
     gi(sys.argv)
