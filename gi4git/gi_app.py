@@ -41,8 +41,7 @@ def gi(argv):
     else:
         possible_commands = trie.possible_commands(cli.get_command())
         if len(possible_commands) == 0:
-            print("{}: could not find git command starting with '{}'".format(cli.get_me(), cli.get_command()),
-                  file=sys.stderr)
+            os.system(get_command_line(cli, cli_cleaner))
         elif len(possible_commands) == 1:
             os.system(get_command_line(cli, cli_cleaner, possible_commands[0]))
         else:
