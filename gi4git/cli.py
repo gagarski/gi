@@ -2,8 +2,9 @@ import shlex
 from enum import Enum
 from itertools import count
 
-from gi.git import get_git_aliases, get_git_commands
+from gi4git.git import get_git_aliases, get_git_commands
 
+from gi4git.git import get_git_subcommands
 from gi4git.processing import CommandFinder
 
 
@@ -142,16 +143,18 @@ class GiCli:
 class CommandFindVisitor(CLIVisitor):
     class State(Enum):
         WAIT_FOR_COMMAND = 0
-        NORMAL = 1
+        WAIT_FOR_SUBCOMMAND = 1
+        NORMAL = 2
 
     def __init__(self, argv, git="git", process_dashes=True):
         super().__init__(argv)
-        self.__trie = CommandFinder(get_git_commands(git) + get_git_aliases(git), process_dashes)
+        self.__process_dashes = process_dashes
+        self.__trie = CommandFinder(get_git_commands(git) + get_git_aliases(git), self.__process_dashes)
         self.__state = CommandFindVisitor.State.WAIT_FOR_COMMAND
         self._new_argv = []
+        self.__git = git
         self.possible_commands = []
         self.command = None
-        self.__git = git
 
     def visit_me(self, me, index):
         self._new_argv.append(self.__git)
@@ -166,13 +169,36 @@ class CommandFindVisitor(CLIVisitor):
     def visit_parameter(self, parameter, index):
         if self.__state == CommandFindVisitor.State.WAIT_FOR_COMMAND:
             possible_commands = self.__trie.possible_commands(parameter)
-            self.command = parameter
             self.possible_commands = possible_commands
+            self.command = parameter
+            if len(possible_commands) == 1:
+                self._new_argv.append(possible_commands[0])
+                if possible_commands[0] == "help":
+                    # self.__trie = self.__trie
+                    self.__state = CommandFindVisitor.State.WAIT_FOR_SUBCOMMAND
+                else:
+                    subcommands = get_git_subcommands(possible_commands[0])
+                    if len(subcommands) > 0:
+                        self.__state = CommandFindVisitor.State.WAIT_FOR_SUBCOMMAND
+                        self.__trie = CommandFinder(subcommands, self.__process_dashes)
+                    else:
+                        self.__state = CommandFindVisitor.State.NORMAL
+                        self.__trie = None
+            else:
+                self._new_argv.append(parameter)
+                self.__state = CommandFindVisitor.State.NORMAL
+                self.__trie = None
+        elif self.__state == CommandFindVisitor.State.WAIT_FOR_SUBCOMMAND:
+            possible_commands = self.__trie.possible_commands(parameter)
+            self.command = "{} {}".format(self.command, parameter)
+            self.possible_commands = ["{} {}".format(self.possible_commands[0], c) for c in possible_commands]
+
             if len(possible_commands) == 1:
                 self._new_argv.append(possible_commands[0])
             else:
                 self._new_argv.append(parameter)
             self.__state = CommandFindVisitor.State.NORMAL
+            self.__trie = None
         else:
             self._new_argv.append(parameter)
 

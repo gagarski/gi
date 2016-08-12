@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='gi',
-      version='0.0.4',
+      version='0.1.0',
       description='Git wrapper to perform Mercurial-like short unique abbreviation searching for commands',
       maintainer='Kirill Gagarski',
       maintainer_email='kirill.gagarski [at] gmail.com',

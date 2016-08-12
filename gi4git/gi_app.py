@@ -1,8 +1,10 @@
 import sys
 
 import os
+from pprint import pprint
 
 from gi4git.cli import GiCli, BashCompletionHelperVisitor, CommandFindVisitor
+from gi4git.git import get_git_subcommands
 
 
 def gi(argv):
@@ -31,6 +33,6 @@ def gi(argv):
             print("{}: ambiguous git command '{}'".format(cli.me, v.command), file=sys.stderr)
             print("Possible git commands: ", file=sys.stderr)
             for cmd in v.possible_commands:
-                print("  {}".format(cmd))
+                print("  {}".format(cmd), file=sys.stderr)
         else:
             os.system(v.git_cli())
