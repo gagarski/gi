@@ -2,9 +2,7 @@ import sys
 
 import os
 
-from gi4git.git import get_git_commands, get_git_aliases
-from gi4git.processing import CommandsFinder
-from gi4git.cli import GiCli, CliCleaner, print_bash_completion_output, get_command_line
+from gi4git.cli import GiCli, BashCompletionHelperVisitor, CommandFindVisitor
 
 
 def gi(argv):
@@ -14,38 +12,25 @@ def gi(argv):
     :return:
     """
     cli = GiCli(argv)
-    trie = CommandsFinder(get_git_commands(), get_git_aliases(), cli.is_process_dashes())
-    cli_cleaner = CliCleaner(argv)
 
-    if cli.is_bash_completion_helper() and cli.get_command() is None:
-        print_bash_completion_output(cli,
-                                     cli_cleaner,
-                                     cli.get_bash_completion_cword(),
-                                     cli.is_bash_completion_cword_empty())
-    elif cli.is_bash_completion_helper():
-        possible_commands = trie.possible_commands(cli.get_command())
-        if len(possible_commands) == 1:
-            print_bash_completion_output(cli, cli_cleaner,
-                                         cli.get_bash_completion_cword(),
-                                         cli.is_bash_completion_cword_empty(),
-                                         possible_commands[0])
-        else:
-            print_bash_completion_output(cli,
-                                         cli_cleaner,
-                                         cli.get_bash_completion_cword(),
-                                         cli.is_bash_completion_cword_empty())
-    elif cli.get_command() is None:
-        # Just git with arguments. No commands.
-        # E.g. "git --version"
-        os.system(get_command_line(cli, cli_cleaner))
+    if cli.bash_completion_helper:
+        v = BashCompletionHelperVisitor(argv=argv,
+                                        cword=cli.bash_completion_cword,
+                                        cword_empty=cli.bash_completion_cword_empty,
+                                        git=cli.git,
+                                        process_dashes=cli.process_dashes)
+        v.run()
+        for line in v.bash_completion_output():
+            print(line)
     else:
-        possible_commands = trie.possible_commands(cli.get_command())
-        if len(possible_commands) == 0:
-            os.system(get_command_line(cli, cli_cleaner))
-        elif len(possible_commands) == 1:
-            os.system(get_command_line(cli, cli_cleaner, possible_commands[0]))
-        else:
-            print("{}: ambiguous git command '{}'".format(cli.get_me(), cli.get_command()), file=sys.stderr)
-            print("Possible git commands: ".format(cli.get_me(), cli.get_command()), file=sys.stderr)
-            for cmd in possible_commands:
+        v = CommandFindVisitor(argv=argv,
+                               git=cli.git,
+                               process_dashes=cli.process_dashes)
+        v.run()
+        if v.is_ambiguous():
+            print("{}: ambiguous git command '{}'".format(cli.me, v.command), file=sys.stderr)
+            print("Possible git commands: ", file=sys.stderr)
+            for cmd in v.possible_commands:
                 print("  {}".format(cmd))
+        else:
+            os.system(v.git_cli())

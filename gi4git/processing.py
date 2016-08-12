@@ -1,12 +1,12 @@
 import marisa_trie
 
 
-class CommandsFinder:
+class CommandFinder:
     """
     Class that builds a trie from available git commands and aliases and allows to
     search git commands and aliases that start with prefix
     """
-    def __init__(self, commands=(), aliases=(), process_dashes=True):
+    def __init__(self, commands=(), process_dashes=True):
         """
         Constructor.
 
@@ -35,11 +35,10 @@ class CommandsFinder:
         Example:
         For prefix "upda" there are three possible commands: "update-index", "update-ref" and "update-server-info"
 
-        :param commands: list of git commands
-        :param aliases: list of git aliases
+        :param commands: list of git commands and aliases
         :param process_dashes: perform special processing for dashes in commands?
         """
-        self.__trie = marisa_trie.Trie(commands + aliases)
+        self.__trie = marisa_trie.Trie(commands)
         self.__process_dashes = process_dashes
 
     def possible_commands(self, prefix):
