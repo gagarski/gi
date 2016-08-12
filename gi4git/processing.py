@@ -54,7 +54,7 @@ class CommandFinder:
             return [prefix]
         elif self.__trie.has_keys_with_prefix(prefix):
             # By prefix
-            with_prefix = [item for (item, id) in self.__trie.items(prefix)]
+            with_prefix = [item for item, _ in self.__trie.items(prefix)]
             if self.__process_dashes:
                 without_dashes = [item for item in with_prefix if "-" not in item[len(prefix):]]
                 if len(without_dashes) == 0:

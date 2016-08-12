@@ -1,11 +1,13 @@
 import os
 from itertools import *
 
+
 class Magic:
     HELP_A = "help -a"
     GET_ALIASES = "config --get-regexp --name-only alias"
-    CMD_HELP = """man git-{} | col -b"""
+    CMD_HELP = """help {} | col -b"""
     SYNOPSIS = "SYNOPSIS"
+
 
 def get_git_commands(git="git"):
     """
@@ -16,7 +18,7 @@ def get_git_commands(git="git"):
     # TODO Is there a more convenient way to get all git commands?
     # TODO Finding git-core directory and traversing path for "git-*" files is not convenient.
     with os.popen("{} {}".format(git, Magic.HELP_A)) as git_help:
-        lines_with_commands = (line for line in dropwhile(lambda str: str.strip(), git_help) if
+        lines_with_commands = (line for line in dropwhile(lambda line: line.strip(), git_help) if
                                line.startswith(" ") and len(line.strip()) != 0)
         commands = list(set(chain.from_iterable(str(line).split() for line in lines_with_commands)))
         return commands
@@ -32,9 +34,9 @@ def get_git_aliases(git="git"):
         return list(set(str(line.strip()).split(".", 2)[1] for line in git_conf))
 
 
-def get_git_subcommands(command):
-    with os.popen(Magic.CMD_HELP.format(command)) as man:
-        man_i = dropwhile(lambda str: not str.strip().startswith(Magic.SYNOPSIS), man)
+def get_git_subcommands(command, git="git"):
+    with os.popen("{} {}".format(git, Magic.CMD_HELP.format(command))) as man:
+        man_i = dropwhile(lambda line: not line.strip().startswith(Magic.SYNOPSIS), man)
         try:
             next(man_i)
         except StopIteration:
@@ -50,4 +52,3 @@ def get_git_subcommands(command):
                         yield subc[0]
 
         return list(set(subcommands_gen()))
-

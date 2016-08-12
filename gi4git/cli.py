@@ -1,9 +1,7 @@
 import shlex
 from enum import Enum
-from itertools import count
 
 from gi4git.git import get_git_aliases, get_git_commands
-
 from gi4git.git import get_git_subcommands
 from gi4git.processing import CommandFinder
 
@@ -250,4 +248,3 @@ class BashCompletionHelperVisitor(CommandFindVisitor):
                 yield ""
 
         return list(gen())
-

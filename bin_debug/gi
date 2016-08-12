@@ -3,6 +3,7 @@
 import sys
 import os
 
+
 def add_gi_path():
     libdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     sys.path.insert(0, os.path.join(libdir))

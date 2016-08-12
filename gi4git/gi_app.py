@@ -1,10 +1,7 @@
 import sys
-
 import os
-from pprint import pprint
 
 from gi4git.cli import GiCli, BashCompletionHelperVisitor, CommandFindVisitor
-from gi4git.git import get_git_subcommands
 
 
 def gi(argv):
