@@ -1,5 +1,6 @@
 import os
 from itertools import *
+import re
 
 
 class Magic:
@@ -34,6 +35,9 @@ def get_git_aliases(git="git"):
         return list(set(str(line.strip()).split(".", 2)[1] for line in git_conf))
 
 
+__subc_re = re.compile(r"^[A-Za-z][A-Za-z0-9\-]*$")
+
+
 def get_git_subcommands(command, git="git"):
     with os.popen("{} {}".format(git, Magic.CMD_HELP.format(command))) as man:
         man_i = dropwhile(lambda line: not line.strip().startswith(Magic.SYNOPSIS), man)
@@ -41,13 +45,25 @@ def get_git_subcommands(command, git="git"):
             next(man_i)
         except StopIteration:
             return []
-        synopsis = takewhile(lambda line: line.strip().startswith("git {}".format(command)), man_i)
+        synopsis = takewhile(lambda line: len(line.strip()) != 0, man_i)
+
+        def synopsis_gen():
+            cur_cmd = None
+            for line in synopsis:
+                stripped = line.strip()
+                if stripped.startswith("{} {}".format(git, command)):
+                    if cur_cmd is not None:
+                        yield cur_cmd
+                    cur_cmd = stripped
+                else:
+                    cur_cmd += " "
+                    cur_cmd += stripped
 
         def subcommands_gen():
-            for line in synopsis:
+            for line in synopsis_gen():
                 words = line.strip().split()
                 if len(words) > 2:
-                    subc = [word for word in words[2:] if len(word) != 0 and word[0].isalpha()]
+                    subc = [word for word in words[2:] if len(word) != 0 and __subc_re.match(word)]
                     if len(subc) != 0:
                         yield subc[0]
 
