@@ -2,6 +2,10 @@
 
 `git` wrapper that provides Mercurial-style shortest unique command abbreviations for commands.
 
+## TODO ##
+
+Examples and shit. Differences from Mercurial.
+
 ## See also ##
 
 * [Bash completion for `gi`](https://bitbucket.org/gagarski/gi-bash-completion )
