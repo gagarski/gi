@@ -1,6 +1,6 @@
 # gi #
 
-`git` wrapper that provides Mercurial-style shortest unique abbreviations for commands.
+`git` wrapper that provides Mercurial-style shortest unique command abbreviations for commands.
 
 ## See also ##
 
