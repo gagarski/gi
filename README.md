@@ -12,6 +12,7 @@
 ### Arch Linux ###
 
 There are AUR packages:
+
 * [`gi`](https://aur.archlinux.org/packages/gi/)
 * [`gi-bash-completion`](https://aur.archlinux.org/packages/gi-bash-completion/)
 * [`gi-zsh-completion`](https://aur.archlinux.org/packages/gi-zsh-completion/)
