@@ -55,9 +55,15 @@ def get_git_subcommands(command, git="git"):
                     if cur_cmd is not None:
                         yield cur_cmd
                     cur_cmd = stripped
-                else:
+                elif cur_cmd is not None:
                     cur_cmd += " "
                     cur_cmd += stripped
+                else:
+                    cur_cmd = None
+                    continue
+
+            if cur_cmd is not None:
+                yield cur_cmd
 
         def subcommands_gen():
             for line in synopsis_gen():
