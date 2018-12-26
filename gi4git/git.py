@@ -4,7 +4,7 @@ import re
 
 
 class Magic:
-    HELP_A = "help -a"
+    HELP_A = "help -a --no-verbose"
     GET_ALIASES = "config --get-regexp --name-only alias"
     CMD_HELP = """help {} | col -b"""
     SYNOPSIS = "SYNOPSIS"
@@ -12,7 +12,7 @@ class Magic:
 
 def get_git_commands(git="git"):
     """
-    Returns a list of available git commands from "git help -a"
+    Returns a list of available git commands from "git help -a --no-verbose"
     :param git: git executable name
     :return: list of available git commands
     """
