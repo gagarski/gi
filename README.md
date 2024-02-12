@@ -2,25 +2,6 @@
 
 `git` wrapper that provides Mercurial-style shortest unique command abbreviations for commands.
 
-## TODO ##
+## Status ##
 
-Examples and shit. Differences from Mercurial.
-
-## See also ##
-
-* [Bash completion for `gi`](https://bitbucket.org/gagarski/gi-bash-completion )
-* [Zsh completion for `gi`](https://bitbucket.org/gagarski/gi-zsh-completion )
-
-## Installation ##
-
-### Arch Linux ###
-
-There are AUR packages:
-
-* [`gi`](https://aur.archlinux.org/packages/gi/)
-* [`gi-bash-completion`](https://aur.archlinux.org/packages/gi-bash-completion/)
-* [`gi-zsh-completion`](https://aur.archlinux.org/packages/gi-zsh-completion/)
-
-### Other ###
-
-Dunno, build a package yourself or `pip install` from git repo.
+As of 2024 this project is abandoned and not actively developed since the only user (me) stopped using it a long time ago. I currently have no idea if this project works with modern versions of git, bash and zsh. If you are interested in this project, feel free to fork and continue where it left off.
